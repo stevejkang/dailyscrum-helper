@@ -1,0 +1,23 @@
+name = "dailyscrum-helper"
+main = "src/index.ts"
+compatibility_date = "2025-01-01"
+
+[triggers]
+crons = ["0 1 * * 1-5"]  # UTC 01:00 = KST 10:00, Mon-Fri
+
+[[kv_namespaces]]
+binding = "KV"
+id = "bad16809d0a542268ae2aad4fe0ece98"
+
+[vars]
+JIRA_BASE_URL = "https://wantedlab.atlassian.net"
+JIRA_PROJECT_KEY_SQA = "SQA"
+JIRA_PROJECT_KEY_DEF = "DEF"
+JIRA_BOARD_BASE_URL = "https://wantedlab.atlassian.net/jira/software/c/projects/PI/boards/"
+JIRA_DEF_LIST_BASE_URL = "https://wantedlab.atlassian.net/jira/core/projects/DEF/list"
+
+# Secrets (set via `wrangler secret put`):
+# SLACK_BOT_TOKEN
+# SLACK_SIGNING_SECRET
+# JIRA_API_EMAIL
+# JIRA_API_TOKEN

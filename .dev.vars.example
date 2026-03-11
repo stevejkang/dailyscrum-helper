@@ -1,0 +1,4 @@
+SLACK_BOT_TOKEN=xoxb-xxxxxxxxxxxx-xxxxxxxxxxxx-xxxxxxxxxxxxxxxxxxxxxxxx
+SLACK_SIGNING_SECRET=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+JIRA_API_EMAIL=your-email@wantedlab.com
+JIRA_API_TOKEN=your-jira-api-token
