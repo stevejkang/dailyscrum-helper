@@ -3,7 +3,7 @@ main = "src/index.ts"
 compatibility_date = "2025-01-01"
 
 [triggers]
-crons = ["0 1 * * 1-5"]  # UTC 01:00 = KST 10:00, Mon-Fri
+crons = ["0 1 * * MON-FRI"]  # UTC 01:00 = KST 10:00, Mon-Fri
 
 [[kv_namespaces]]
 binding = "KV"
