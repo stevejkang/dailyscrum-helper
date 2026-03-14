@@ -16,6 +16,14 @@ JIRA_PROJECT_KEY_DEF = "DEF"
 JIRA_BOARD_BASE_URL = "https://wantedlab.atlassian.net/jira/software/c/projects/PI/boards/"
 JIRA_DEF_LIST_BASE_URL = "https://wantedlab.atlassian.net/jira/core/projects/DEF/list"
 
+[observability]
+enabled = true
+
+[observability.logs]
+enabled = true
+invocation_logs = true
+head_sampling_rate = 1
+
 # Secrets (set via `wrangler secret put`):
 # SLACK_BOT_TOKEN
 # SLACK_SIGNING_SECRET
