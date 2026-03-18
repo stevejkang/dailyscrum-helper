@@ -157,7 +157,6 @@ export function buildHomeTab(
             emoji: true,
           },
           action_id: 'open_sqa_select_home',
-          style: 'primary',
         },
       ],
     });
