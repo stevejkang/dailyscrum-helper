@@ -1,10 +1,11 @@
-import type { Env, Settings, TeamMember, Facilitators, SqaSelection } from '../types';
+import type { Env, Settings, TeamMember, Facilitators, SqaSelection, BoardConfig } from '../types';
 
 const KEYS = {
   SETTINGS: 'settings',
   MEMBERS: 'members',
   FACILITATORS: 'facilitators',
   SQA_SELECTIONS: 'sqa_selections',
+  BOARDS: 'boards',
 } as const;
 
 export async function getSettings(kv: KVNamespace): Promise<Settings | null> {
@@ -58,4 +59,28 @@ export async function getSqaSelections(kv: KVNamespace): Promise<SqaSelection[]>
 
 export async function saveSqaSelections(kv: KVNamespace, selections: SqaSelection[]): Promise<void> {
   await kv.put(KEYS.SQA_SELECTIONS, JSON.stringify(selections));
+}
+
+export async function getBoards(kv: KVNamespace): Promise<BoardConfig[]> {
+  const boards = await kv.get<BoardConfig[]>(KEYS.BOARDS, 'json');
+  return boards ?? [];
+}
+
+export async function saveBoards(kv: KVNamespace, boards: BoardConfig[]): Promise<void> {
+  await kv.put(KEYS.BOARDS, JSON.stringify(boards));
+}
+
+export async function addBoard(kv: KVNamespace, board: BoardConfig): Promise<void> {
+  const boards = await getBoards(kv);
+  const exists = boards.some((b) => b.id === board.id);
+  if (!exists) {
+    boards.push(board);
+    await saveBoards(kv, boards);
+  }
+}
+
+export async function removeBoard(kv: KVNamespace, boardId: string): Promise<void> {
+  const boards = await getBoards(kv);
+  const filtered = boards.filter((b) => b.id !== boardId);
+  await saveBoards(kv, filtered);
 }

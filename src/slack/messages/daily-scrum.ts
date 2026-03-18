@@ -1,4 +1,4 @@
-import type { Settings } from '../../types';
+import type { Settings, BoardConfig } from '../../types';
 
 export interface SqaLink {
   sqaKey: string;
@@ -9,13 +9,30 @@ export interface SqaLink {
 export function buildDailyScrumMessage(
   facilitatorSlackId: string,
   settings: Settings,
-  boardBaseUrl: string,
+  boards: BoardConfig[],
   sqaLinks?: SqaLink[],
 ): { blocks: unknown[]; text: string } {
-  const boardUrl = `${boardBaseUrl}${settings.boardId}`;
   const hasSqa = sqaLinks && sqaLinks.length > 0;
 
   const text = `<@${facilitatorSlackId}> 오늘의 데일리 스크럼 진행자입니다!`;
+
+  const actionElements: unknown[] = [
+    {
+      type: 'button',
+      text: { type: 'plain_text', text: '📹 Google Meet 참여하기', emoji: true },
+      url: settings.meetLink,
+      action_id: 'open_meet',
+    },
+  ];
+
+  for (const board of boards) {
+    actionElements.push({
+      type: 'button',
+      text: { type: 'plain_text', text: `📋 ${board.name}`, emoji: true },
+      url: board.url,
+      action_id: `open_board_${board.id}`,
+    });
+  }
 
   const blocks: unknown[] = [
     {
@@ -28,20 +45,7 @@ export function buildDailyScrumMessage(
     { type: 'divider' },
     {
       type: 'actions',
-      elements: [
-        {
-          type: 'button',
-          text: { type: 'plain_text', text: '📹 Google Meet 참여하기', emoji: true },
-          url: settings.meetLink,
-          action_id: 'open_meet',
-        },
-        {
-          type: 'button',
-          text: { type: 'plain_text', text: '📋 PI 보드 바로가기', emoji: true },
-          url: boardUrl,
-          action_id: 'open_board',
-        },
-      ],
+      elements: actionElements,
     },
     { type: 'divider' },
     {

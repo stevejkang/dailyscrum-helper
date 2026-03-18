@@ -1,7 +1,7 @@
 import type { Env, SlackEvent } from '../types';
 import { publishHomeTab } from './api';
 import { buildHomeTab } from './views/home-tab';
-import { getMembers, getSettings, getFacilitators, getSqaSelections, isMember } from '../kv/store';
+import { getMembers, getSettings, getFacilitators, getSqaSelections, getBoards, isMember } from '../kv/store';
 
 export async function handleEvent(event: SlackEvent, env: Env): Promise<Response> {
   // URL verification challenge
@@ -24,15 +24,16 @@ export async function handleEvent(event: SlackEvent, env: Env): Promise<Response
 }
 
 export async function refreshHomeTab(env: Env, userId: string): Promise<void> {
-  const [members, facilitators, settings, sqaSelections] = await Promise.all([
+  const [members, facilitators, settings, sqaSelections, boards] = await Promise.all([
     getMembers(env.KV),
     getFacilitators(env.KV),
     getSettings(env.KV),
     getSqaSelections(env.KV),
+    getBoards(env.KV),
   ]);
 
   const isTeamMemberOrEmpty = members.length === 0 || isMember(members, userId);
-  const view = buildHomeTab(members, facilitators, settings, isTeamMemberOrEmpty, sqaSelections);
+  const view = buildHomeTab(members, facilitators, settings, isTeamMemberOrEmpty, sqaSelections, boards);
 
   await publishHomeTab(env.SLACK_BOT_TOKEN, userId, view);
 }

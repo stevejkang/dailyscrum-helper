@@ -124,29 +124,27 @@ export function buildChannelModal(currentChannelId?: string): Record<string, unk
   };
 }
 
-// ─── Edit Board ID Modal ───
+// ─── Add Board Modal ───
 
-export function buildBoardModal(currentBoardId?: string): Record<string, unknown> {
+export function buildAddBoardModal(): Record<string, unknown> {
   return {
     type: 'modal',
-    callback_id: 'edit_board_submit',
-    title: { type: 'plain_text', text: '보드 ID 변경' },
-    submit: { type: 'plain_text', text: '저장' },
+    callback_id: 'add_board_submit',
+    title: { type: 'plain_text', text: '보드 추가' },
+    submit: { type: 'plain_text', text: '추가' },
     close: { type: 'plain_text', text: '취소' },
     blocks: [
       {
         type: 'input',
-        block_id: 'board_block',
-        label: { type: 'plain_text', text: 'PI 보드 ID' },
+        block_id: 'board_url_block',
+        label: { type: 'plain_text', text: 'Jira 보드 링크' },
         element: {
-          type: 'plain_text_input',
-          action_id: 'board_input',
-          placeholder: { type: 'plain_text', text: '예: 234' },
-          ...(currentBoardId ? { initial_value: currentBoardId } : {}),
-        },
-        hint: {
-          type: 'plain_text',
-          text: '보드 URL의 마지막 숫자입니다. (예: boards/234)',
+          type: 'url_text_input',
+          action_id: 'board_url_input',
+          placeholder: {
+            type: 'plain_text',
+            text: 'https://xxx.atlassian.net/.../boards/234',
+          },
         },
       },
     ],

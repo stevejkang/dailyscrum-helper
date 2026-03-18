@@ -2,8 +2,13 @@
 
 export interface Settings {
   channelId: string;
-  boardId: string;
   meetLink: string;
+}
+
+export interface BoardConfig {
+  id: string;
+  name: string;
+  url: string;
 }
 
 export interface TeamMember {
@@ -37,7 +42,6 @@ export interface Env {
   JIRA_BASE_URL: string;
   JIRA_PROJECT_KEY_SQA: string;
   JIRA_PROJECT_KEY_DEF: string;
-  JIRA_BOARD_BASE_URL: string;
   JIRA_DEF_LIST_BASE_URL: string;
 }
 
@@ -103,4 +107,12 @@ export interface JiraIssue {
 export interface JiraSearchResponse {
   issues: JiraIssue[];
   total: number;
+}
+
+export interface JiraBoardResponse {
+  id: number;
+  name: string;
+  location?: {
+    projectKey: string;
+  };
 }

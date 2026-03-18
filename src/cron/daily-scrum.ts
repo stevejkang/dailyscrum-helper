@@ -1,5 +1,5 @@
 import type { Env, Weekday } from '../types';
-import { getSettings, getMembers, getFacilitators, getSqaSelections } from '../kv/store';
+import { getSettings, getMembers, getFacilitators, getSqaSelections, getBoards } from '../kv/store';
 import { postMessage } from '../slack/api';
 import { buildDailyScrumMessage } from '../slack/messages/daily-scrum';
 import { buildDefBoardUrls } from '../jira/client';
@@ -25,11 +25,12 @@ export async function handleDailyScrum(env: Env): Promise<void> {
     return;
   }
 
-  const [settings, members, facilitators, sqaSelections] = await Promise.all([
+  const [settings, members, facilitators, sqaSelections, boards] = await Promise.all([
     getSettings(env.KV),
     getMembers(env.KV),
     getFacilitators(env.KV),
     getSqaSelections(env.KV),
+    getBoards(env.KV),
   ]);
 
   if (!settings?.channelId) {
@@ -37,8 +38,8 @@ export async function handleDailyScrum(env: Env): Promise<void> {
     return;
   }
 
-  if (!settings.meetLink || !settings.boardId) {
-    console.error('Meet link or board ID not configured. Skipping daily scrum.');
+  if (!settings.meetLink) {
+    console.error('Meet link not configured. Skipping daily scrum.');
     return;
   }
 
@@ -64,7 +65,7 @@ export async function handleDailyScrum(env: Env): Promise<void> {
   const { blocks, text } = buildDailyScrumMessage(
     facilitatorId,
     settings,
-    env.JIRA_BOARD_BASE_URL,
+    boards,
     sqaLinks,
   );
 

@@ -1,4 +1,4 @@
-import type { Settings, TeamMember, Facilitators, Weekday, SqaSelection } from '../../types';
+import type { Settings, TeamMember, Facilitators, Weekday, SqaSelection, BoardConfig } from '../../types';
 
 const WEEKDAY_LABELS: Record<Weekday, string> = {
   monday: '월',
@@ -16,6 +16,7 @@ export function buildHomeTab(
   settings: Settings | null,
   isTeamMember: boolean,
   sqaSelections?: SqaSelection[],
+  boards?: BoardConfig[],
 ): Record<string, unknown> {
   const blocks: unknown[] = [];
 
@@ -164,6 +165,65 @@ export function buildHomeTab(
 
   blocks.push({ type: 'divider' });
 
+  // ─── Boards ───
+  blocks.push({
+    type: 'section',
+    text: { type: 'mrkdwn', text: `*📋 Jira 보드 (${boards?.length ?? 0}개)*` },
+  });
+
+  if (boards && boards.length > 0) {
+    for (const board of boards) {
+      const boardBlock: Record<string, unknown> = {
+        type: 'section',
+        text: {
+          type: 'mrkdwn',
+          text: `<${board.url}|${board.name}>`,
+        },
+      };
+
+      if (isTeamMember) {
+        boardBlock.accessory = {
+          type: 'button',
+          text: { type: 'plain_text', text: '삭제', emoji: true },
+          action_id: `remove_board_${board.id}`,
+          style: 'danger',
+          confirm: {
+            title: { type: 'plain_text', text: '보드 삭제' },
+            text: {
+              type: 'mrkdwn',
+              text: `*${board.name}* 보드를 제거할까요?`,
+            },
+            confirm: { type: 'plain_text', text: '삭제' },
+            deny: { type: 'plain_text', text: '취소' },
+          },
+        };
+      }
+
+      blocks.push(boardBlock);
+    }
+  } else {
+    blocks.push({
+      type: 'section',
+      text: { type: 'mrkdwn', text: '_등록된 보드가 없습니다._' },
+    });
+  }
+
+  if (isTeamMember) {
+    blocks.push({
+      type: 'actions',
+      elements: [
+        {
+          type: 'button',
+          text: { type: 'plain_text', text: '+ 보드 추가', emoji: true },
+          action_id: 'add_board',
+          style: 'primary',
+        },
+      ],
+    });
+  }
+
+  blocks.push({ type: 'divider' });
+
   // ─── Settings ───
   blocks.push({
     type: 'section',
@@ -173,19 +233,14 @@ export function buildHomeTab(
   const channelText = settings?.channelId
     ? `<#${settings.channelId}>`
     : '_미설정_';
-  const boardText = settings?.boardId ?? '_미설정_';
   const meetText = settings?.meetLink ?? '_미설정_';
 
   blocks.push({
     type: 'section',
     fields: [
       { type: 'mrkdwn', text: `*📺 발송 채널*\n${channelText}` },
-      { type: 'mrkdwn', text: `*📋 PI 보드 ID*\n${boardText}` },
+      { type: 'mrkdwn', text: `*📹 Meet 링크*\n${meetText}` },
     ],
-  });
-  blocks.push({
-    type: 'section',
-    text: { type: 'mrkdwn', text: `*📹 Meet 링크*\n${meetText}` },
   });
 
   if (isTeamMember) {
@@ -196,11 +251,6 @@ export function buildHomeTab(
           type: 'button',
           text: { type: 'plain_text', text: '채널 변경', emoji: true },
           action_id: 'edit_channel',
-        },
-        {
-          type: 'button',
-          text: { type: 'plain_text', text: '보드 ID 변경', emoji: true },
-          action_id: 'edit_board',
         },
         {
           type: 'button',

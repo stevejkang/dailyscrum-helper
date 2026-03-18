@@ -13,7 +13,6 @@ id = "bad16809d0a542268ae2aad4fe0ece98"
 JIRA_BASE_URL = "https://wantedlab.atlassian.net"
 JIRA_PROJECT_KEY_SQA = "SQA"
 JIRA_PROJECT_KEY_DEF = "DEF"
-JIRA_BOARD_BASE_URL = "https://wantedlab.atlassian.net/jira/software/c/projects/PI/boards/"
 JIRA_DEF_LIST_BASE_URL = "https://wantedlab.atlassian.net/jira/core/projects/DEF/list"
 
 [observability]

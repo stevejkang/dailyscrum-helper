@@ -3,10 +3,13 @@ import {
   getMembers,
   getSettings,
   getFacilitators,
+  getBoards,
   saveSettings,
   saveFacilitators,
   addMember,
   removeMember,
+  addBoard,
+  removeBoard,
   isMember,
   getSqaSelections,
   saveSqaSelections,
@@ -16,12 +19,12 @@ import {
   buildAddMemberModal,
   buildFacilitatorsModal,
   buildChannelModal,
-  buildBoardModal,
+  buildAddBoardModal,
   buildMeetLinkModal,
   buildSqaSelectModal,
 } from './views/modals';
 import { buildDailyScrumMessage } from './messages/daily-scrum';
-import { fetchSqaTickets, buildDefBoardUrls } from '../jira/client';
+import { fetchSqaTickets, fetchBoardName, parseBoardIdFromUrl, buildDefBoardUrls } from '../jira/client';
 import { refreshHomeTab } from './events';
 
 const WEEKDAY_ORDER: Weekday[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
@@ -39,8 +42,11 @@ export async function handleInteraction(
     for (const action of payload.actions) {
       const actionId = action.action_id;
 
-      // Permission check (except open_sqa_select which anyone can use)
-      if (actionId !== 'open_sqa_select' && actionId !== 'open_meet' && actionId !== 'open_board') {
+      if (
+        actionId !== 'open_sqa_select' &&
+        actionId !== 'open_meet' &&
+        !actionId.startsWith('open_board_')
+      ) {
         const members = await getMembers(env.KV);
         if (members.length > 0 && !isMember(members, userId)) {
           return new Response('ok');
@@ -73,10 +79,15 @@ export async function handleInteraction(
         await openModal(env.SLACK_BOT_TOKEN, payload.trigger_id, modal);
       }
 
-      if (actionId === 'edit_board') {
-        const settings = await getSettings(env.KV);
-        const modal = buildBoardModal(settings?.boardId);
+      if (actionId === 'add_board') {
+        const modal = buildAddBoardModal();
         await openModal(env.SLACK_BOT_TOKEN, payload.trigger_id, modal);
+      }
+
+      if (actionId.startsWith('remove_board_')) {
+        const boardId = actionId.replace('remove_board_', '');
+        await removeBoard(env.KV, boardId);
+        await refreshHomeTab(env, userId);
       }
 
       if (actionId === 'edit_meet_link') {
@@ -185,7 +196,7 @@ export async function handleInteraction(
       const channelId = values.channel_block?.channel_select?.selected_channel;
 
       if (channelId) {
-        const settings = (await getSettings(env.KV)) ?? { channelId: '', boardId: '', meetLink: '' };
+        const settings = (await getSettings(env.KV)) ?? { channelId: '', meetLink: '' };
         settings.channelId = channelId;
         await saveSettings(env.KV, settings);
         await refreshHomeTab(env, userId);
@@ -196,15 +207,20 @@ export async function handleInteraction(
       });
     }
 
-    // Edit board ID
-    if (callbackId === 'edit_board_submit') {
-      const boardId = values.board_block?.board_input?.value;
+    if (callbackId === 'add_board_submit') {
+      const boardUrl = values.board_url_block?.board_url_input?.value;
 
-      if (boardId) {
-        const settings = (await getSettings(env.KV)) ?? { channelId: '', boardId: '', meetLink: '' };
-        settings.boardId = boardId;
-        await saveSettings(env.KV, settings);
-        await refreshHomeTab(env, userId);
+      if (boardUrl) {
+        const boardId = parseBoardIdFromUrl(boardUrl);
+        if (boardId) {
+          const boardName = await fetchBoardName(env, boardId);
+          await addBoard(env.KV, {
+            id: boardId,
+            name: boardName ?? `Board ${boardId}`,
+            url: boardUrl,
+          });
+          await refreshHomeTab(env, userId);
+        }
       }
 
       return new Response(JSON.stringify({ response_action: 'clear' }), {
@@ -212,12 +228,11 @@ export async function handleInteraction(
       });
     }
 
-    // Edit meet link
     if (callbackId === 'edit_meet_link_submit') {
       const meetLink = values.meet_link_block?.meet_link_input?.value;
 
       if (meetLink) {
-        const settings = (await getSettings(env.KV)) ?? { channelId: '', boardId: '', meetLink: '' };
+        const settings = (await getSettings(env.KV)) ?? { channelId: '', meetLink: '' };
         settings.meetLink = meetLink;
         await saveSettings(env.KV, settings);
         await refreshHomeTab(env, userId);
@@ -248,14 +263,14 @@ export async function handleInteraction(
       };
 
       if (metadata.source === 'message' && metadata.messageTs && metadata.channelId) {
-        const [settings, members, facilitators] = await Promise.all([
+        const [settings, members, facilitators, boards] = await Promise.all([
           getSettings(env.KV),
           getMembers(env.KV),
           getFacilitators(env.KV),
+          getBoards(env.KV),
         ]);
 
         if (settings && facilitators) {
-          // Determine today's facilitator
           const now = new Date();
           const kstDate = new Date(now.getTime() + 9 * 60 * 60 * 1000);
           const dayIndex = kstDate.getUTCDay();
@@ -265,7 +280,6 @@ export async function handleInteraction(
           const weekday = DAY_MAP[dayIndex];
           const facilitatorId = weekday ? facilitators[weekday] : '';
 
-          // Build SQA links (empty array if nothing selected)
           const jiraAccountIds = members.map((m) => m.jiraAccountId);
           const sqaKeys = sqaEntries.map((e) => e.key);
           const sqaLinks = sqaKeys.length > 0
@@ -276,7 +290,7 @@ export async function handleInteraction(
           const { blocks, text } = buildDailyScrumMessage(
             facilitatorId || userId,
             settings,
-            env.JIRA_BOARD_BASE_URL,
+            boards,
             sqaLinks,
           );
 
