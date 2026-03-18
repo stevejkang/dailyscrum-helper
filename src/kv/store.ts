@@ -1,9 +1,10 @@
-import type { Env, Settings, TeamMember, Facilitators } from '../types';
+import type { Env, Settings, TeamMember, Facilitators, SqaSelection } from '../types';
 
 const KEYS = {
   SETTINGS: 'settings',
   MEMBERS: 'members',
   FACILITATORS: 'facilitators',
+  SQA_SELECTIONS: 'sqa_selections',
 } as const;
 
 export async function getSettings(kv: KVNamespace): Promise<Settings | null> {
@@ -48,4 +49,13 @@ export async function saveFacilitators(kv: KVNamespace, facilitators: Facilitato
 
 export function isMember(members: TeamMember[], slackUserId: string): boolean {
   return members.some((m) => m.slackUserId === slackUserId);
+}
+
+export async function getSqaSelections(kv: KVNamespace): Promise<SqaSelection[]> {
+  const selections = await kv.get<SqaSelection[]>(KEYS.SQA_SELECTIONS, 'json');
+  return selections ?? [];
+}
+
+export async function saveSqaSelections(kv: KVNamespace, selections: SqaSelection[]): Promise<void> {
+  await kv.put(KEYS.SQA_SELECTIONS, JSON.stringify(selections));
 }

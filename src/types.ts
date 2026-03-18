@@ -21,6 +21,11 @@ export interface Facilitators {
   friday: string;
 }
 
+export interface SqaSelection {
+  key: string;
+  summary: string;
+}
+
 // ─── Cloudflare Bindings ───
 
 export interface Env {

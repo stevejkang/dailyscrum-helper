@@ -8,6 +8,8 @@ import {
   addMember,
   removeMember,
   isMember,
+  getSqaSelections,
+  saveSqaSelections,
 } from '../kv/store';
 import { openModal, updateMessage } from './api';
 import {
@@ -86,7 +88,14 @@ export async function handleInteraction(
       if (actionId === 'open_sqa_select') {
         const messageTs = payload.container?.message_ts;
         const channelId = payload.container?.channel_id;
-        const modal = buildSqaSelectModal(messageTs, channelId);
+        const currentSelections = await getSqaSelections(env.KV);
+        const modal = buildSqaSelectModal(messageTs, channelId, currentSelections);
+        await openModal(env.SLACK_BOT_TOKEN, payload.trigger_id, modal);
+      }
+
+      if (actionId === 'open_sqa_select_home') {
+        const currentSelections = await getSqaSelections(env.KV);
+        const modal = buildSqaSelectModal(undefined, undefined, currentSelections);
         await openModal(env.SLACK_BOT_TOKEN, payload.trigger_id, modal);
       }
     }
@@ -230,13 +239,15 @@ export async function handleInteraction(
           return { key, summary: rest.join('::') };
         });
 
+      await saveSqaSelections(env.KV, sqaEntries);
+
       const metadata = JSON.parse(payload.view.private_metadata ?? '{}') as {
         messageTs?: string;
         channelId?: string;
+        source?: string;
       };
 
-      if (metadata.messageTs && metadata.channelId) {
-        // Rebuild the full message with SQA results
+      if (metadata.source === 'message' && metadata.messageTs && metadata.channelId) {
         const [settings, members, facilitators] = await Promise.all([
           getSettings(env.KV),
           getMembers(env.KV),
@@ -278,6 +289,8 @@ export async function handleInteraction(
           );
         }
       }
+
+      await refreshHomeTab(env, userId);
 
       return new Response(JSON.stringify({ response_action: 'clear' }), {
         headers: { 'Content-Type': 'application/json' },

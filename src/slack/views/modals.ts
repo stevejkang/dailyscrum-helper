@@ -1,4 +1,4 @@
-import type { TeamMember, Facilitators, Weekday, JiraIssue } from '../../types';
+import type { TeamMember, Facilitators, Weekday, JiraIssue, SqaSelection } from '../../types';
 
 const WEEKDAY_ORDER: Weekday[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
 const WEEKDAY_LABELS: Record<Weekday, string> = {
@@ -183,8 +183,30 @@ export function buildMeetLinkModal(currentLink?: string): Record<string, unknown
 export function buildSqaSelectModal(
   messageTs?: string,
   channelId?: string,
+  currentSelections?: SqaSelection[],
 ): Record<string, unknown> {
-  const metadata = JSON.stringify({ messageTs, channelId });
+  const metadata = JSON.stringify({
+    messageTs,
+    channelId,
+    source: messageTs ? 'message' : 'home',
+  });
+
+  const element: Record<string, unknown> = {
+    type: 'multi_external_select',
+    action_id: 'sqa_select',
+    placeholder: { type: 'plain_text', text: 'SQA 티켓 검색 (복수 선택 가능)' },
+    min_query_length: 0,
+  };
+
+  if (currentSelections && currentSelections.length > 0) {
+    element.initial_options = currentSelections.map((s) => ({
+      text: {
+        type: 'plain_text' as const,
+        text: `${s.key} - ${s.summary}`.substring(0, 75),
+      },
+      value: `${s.key}::${s.summary}`.substring(0, 150),
+    }));
+  }
 
   return {
     type: 'modal',
@@ -198,12 +220,7 @@ export function buildSqaSelectModal(
         type: 'input',
         block_id: 'sqa_select_block',
         label: { type: 'plain_text', text: '현재 진행중인 QA를 선택하세요' },
-        element: {
-          type: 'multi_external_select',
-          action_id: 'sqa_select',
-          placeholder: { type: 'plain_text', text: 'SQA 티켓 검색 (복수 선택 가능)' },
-          min_query_length: 0,
-        },
+        element,
       },
     ],
   };

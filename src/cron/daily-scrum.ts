@@ -1,7 +1,8 @@
 import type { Env, Weekday } from '../types';
-import { getSettings, getMembers, getFacilitators } from '../kv/store';
+import { getSettings, getMembers, getFacilitators, getSqaSelections } from '../kv/store';
 import { postMessage } from '../slack/api';
 import { buildDailyScrumMessage } from '../slack/messages/daily-scrum';
+import { buildDefBoardUrls } from '../jira/client';
 
 const DAY_INDEX_TO_WEEKDAY: Record<number, Weekday> = {
   1: 'monday',
@@ -24,10 +25,11 @@ export async function handleDailyScrum(env: Env): Promise<void> {
     return;
   }
 
-  const [settings, members, facilitators] = await Promise.all([
+  const [settings, members, facilitators, sqaSelections] = await Promise.all([
     getSettings(env.KV),
     getMembers(env.KV),
     getFacilitators(env.KV),
+    getSqaSelections(env.KV),
   ]);
 
   if (!settings?.channelId) {
@@ -51,10 +53,19 @@ export async function handleDailyScrum(env: Env): Promise<void> {
     return;
   }
 
+  const sqaLinks = sqaSelections.length > 0
+    ? buildDefBoardUrls(
+        env.JIRA_DEF_LIST_BASE_URL,
+        members.map((m) => m.jiraAccountId),
+        sqaSelections.map((s) => s.key),
+      ).map((link, i) => ({ ...link, summary: sqaSelections[i].summary }))
+    : undefined;
+
   const { blocks, text } = buildDailyScrumMessage(
     facilitatorId,
     settings,
     env.JIRA_BOARD_BASE_URL,
+    sqaLinks,
   );
 
   const result = await postMessage(env.SLACK_BOT_TOKEN, settings.channelId, blocks, text);

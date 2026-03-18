@@ -1,4 +1,4 @@
-import type { Settings, TeamMember, Facilitators, Weekday } from '../../types';
+import type { Settings, TeamMember, Facilitators, Weekday, SqaSelection } from '../../types';
 
 const WEEKDAY_LABELS: Record<Weekday, string> = {
   monday: '월',
@@ -15,6 +15,7 @@ export function buildHomeTab(
   facilitators: Facilitators | null,
   settings: Settings | null,
   isTeamMember: boolean,
+  sqaSelections?: SqaSelection[],
 ): Record<string, unknown> {
   const blocks: unknown[] = [];
 
@@ -117,6 +118,45 @@ export function buildHomeTab(
           type: 'button',
           text: { type: 'plain_text', text: '진행자 설정 변경', emoji: true },
           action_id: 'edit_facilitators',
+        },
+      ],
+    });
+  }
+
+  blocks.push({ type: 'divider' });
+
+  // ─── SQA ───
+  blocks.push({
+    type: 'section',
+    text: { type: 'mrkdwn', text: '*🔍 현재 SQA*' },
+  });
+
+  if (sqaSelections && sqaSelections.length > 0) {
+    const sqaLines = sqaSelections.map((s) => `• *${s.key}* - ${s.summary}`);
+    blocks.push({
+      type: 'section',
+      text: { type: 'mrkdwn', text: sqaLines.join('\n') },
+    });
+  } else {
+    blocks.push({
+      type: 'section',
+      text: { type: 'mrkdwn', text: '_설정된 SQA가 없습니다._' },
+    });
+  }
+
+  if (isTeamMember) {
+    blocks.push({
+      type: 'actions',
+      elements: [
+        {
+          type: 'button',
+          text: {
+            type: 'plain_text',
+            text: sqaSelections && sqaSelections.length > 0 ? 'SQA 변경' : 'SQA 설정',
+            emoji: true,
+          },
+          action_id: 'open_sqa_select_home',
+          style: 'primary',
         },
       ],
     });
