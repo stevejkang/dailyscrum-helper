@@ -217,6 +217,7 @@ export function buildSqaSelectModal(
       {
         type: 'input',
         block_id: 'sqa_select_block',
+        optional: true,
         label: { type: 'plain_text', text: '현재 진행중인 QA를 선택하세요' },
         element,
       },
