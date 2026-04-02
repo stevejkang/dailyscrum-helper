@@ -38,11 +38,6 @@ export async function handleDailyScrum(env: Env): Promise<void> {
     return;
   }
 
-  if (!settings.meetLink) {
-    console.error('Meet link not configured. Skipping daily scrum.');
-    return;
-  }
-
   if (members.length === 0) {
     console.error('No team members configured. Skipping daily scrum.');
     return;
@@ -54,6 +49,8 @@ export async function handleDailyScrum(env: Env): Promise<void> {
     return;
   }
 
+  const meetLink = settings.meetLinks?.[weekday] || undefined;
+
   const sqaLinks = sqaSelections.length > 0
     ? buildDefBoardUrls(
         env.JIRA_DEF_LIST_BASE_URL,
@@ -64,7 +61,7 @@ export async function handleDailyScrum(env: Env): Promise<void> {
 
   const { blocks, text } = buildDailyScrumMessage(
     facilitatorId,
-    settings,
+    meetLink,
     boards,
     sqaLinks,
   );

@@ -1,4 +1,4 @@
-import type { Env, SlackInteraction, Facilitators, Weekday } from '../types';
+import type { Env, SlackInteraction, Facilitators, MeetLinks, Weekday } from '../types';
 import {
   getMembers,
   getSettings,
@@ -92,7 +92,7 @@ export async function handleInteraction(
 
       if (actionId === 'edit_meet_link') {
         const settings = await getSettings(env.KV);
-        const modal = buildMeetLinkModal(settings?.meetLink);
+        const modal = buildMeetLinkModal(settings?.meetLinks ?? null);
         await openModal(env.SLACK_BOT_TOKEN, payload.trigger_id, modal);
       }
 
@@ -196,7 +196,8 @@ export async function handleInteraction(
       const channelId = values.channel_block?.channel_select?.selected_channel;
 
       if (channelId) {
-        const settings = (await getSettings(env.KV)) ?? { channelId: '', meetLink: '' };
+        const defaultMeetLinks: MeetLinks = { monday: '', tuesday: '', wednesday: '', thursday: '', friday: '' };
+        const settings = (await getSettings(env.KV)) ?? { channelId: '', meetLinks: defaultMeetLinks };
         settings.channelId = channelId;
         await saveSettings(env.KV, settings);
         await refreshHomeTab(env, userId);
@@ -229,14 +230,18 @@ export async function handleInteraction(
     }
 
     if (callbackId === 'edit_meet_link_submit') {
-      const meetLink = values.meet_link_block?.meet_link_input?.value;
+      const meetLinks: MeetLinks = { monday: '', tuesday: '', wednesday: '', thursday: '', friday: '' };
 
-      if (meetLink) {
-        const settings = (await getSettings(env.KV)) ?? { channelId: '', meetLink: '' };
-        settings.meetLink = meetLink;
-        await saveSettings(env.KV, settings);
-        await refreshHomeTab(env, userId);
+      for (const day of WEEKDAY_ORDER) {
+        const val = values[`meet_link_${day}_block`]?.[`meet_link_${day}`]?.value;
+        meetLinks[day] = val ?? '';
       }
+
+      const defaultMeetLinks: MeetLinks = { monday: '', tuesday: '', wednesday: '', thursday: '', friday: '' };
+      const settings = (await getSettings(env.KV)) ?? { channelId: '', meetLinks: defaultMeetLinks };
+      settings.meetLinks = meetLinks;
+      await saveSettings(env.KV, settings);
+      await refreshHomeTab(env, userId);
 
       return new Response(JSON.stringify({ response_action: 'clear' }), {
         headers: { 'Content-Type': 'application/json' },
@@ -279,6 +284,7 @@ export async function handleInteraction(
           };
           const weekday = DAY_MAP[dayIndex];
           const facilitatorId = weekday ? facilitators[weekday] : '';
+          const meetLink = weekday ? (settings.meetLinks?.[weekday] || undefined) : undefined;
 
           const jiraAccountIds = members.map((m) => m.jiraAccountId);
           const sqaKeys = sqaEntries.map((e) => e.key);
@@ -289,7 +295,7 @@ export async function handleInteraction(
 
           const { blocks, text } = buildDailyScrumMessage(
             facilitatorId || userId,
-            settings,
+            meetLink,
             boards,
             sqaLinks,
           );

@@ -232,15 +232,32 @@ export function buildHomeTab(
   const channelText = settings?.channelId
     ? `<#${settings.channelId}>`
     : '_미설정_';
-  const meetText = settings?.meetLink ?? '_미설정_';
 
   blocks.push({
     type: 'section',
-    fields: [
-      { type: 'mrkdwn', text: `*📺 발송 채널*\n${channelText}` },
-      { type: 'mrkdwn', text: `*📹 Meet 링크*\n${meetText}` },
-    ],
+    text: { type: 'mrkdwn', text: `*📺 발송 채널*\n${channelText}` },
   });
+
+  blocks.push({
+    type: 'section',
+    text: { type: 'mrkdwn', text: '*📹 요일별 Meet 링크*' },
+  });
+
+  if (settings?.meetLinks) {
+    const meetLines = WEEKDAY_ORDER.map((day) => {
+      const link = settings.meetLinks[day];
+      return `${WEEKDAY_LABELS[day]}: ${link || '_미설정_'}`;
+    });
+    blocks.push({
+      type: 'section',
+      text: { type: 'mrkdwn', text: meetLines.join('  │  ') },
+    });
+  } else {
+    blocks.push({
+      type: 'section',
+      text: { type: 'mrkdwn', text: '_미설정_' },
+    });
+  }
 
   if (isTeamMember) {
     blocks.push({

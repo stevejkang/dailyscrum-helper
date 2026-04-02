@@ -1,4 +1,4 @@
-import type { TeamMember, Facilitators, Weekday, JiraIssue, SqaSelection } from '../../types';
+import type { TeamMember, Facilitators, MeetLinks, Weekday, SqaSelection } from '../../types';
 
 const WEEKDAY_ORDER: Weekday[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
 const WEEKDAY_LABELS: Record<Weekday, string> = {
@@ -153,26 +153,34 @@ export function buildAddBoardModal(): Record<string, unknown> {
 
 // ─── Edit Meet Link Modal ───
 
-export function buildMeetLinkModal(currentLink?: string): Record<string, unknown> {
+export function buildMeetLinkModal(currentLinks: MeetLinks | null): Record<string, unknown> {
+  const blocks = WEEKDAY_ORDER.map((day) => {
+    const element: Record<string, unknown> = {
+      type: 'url_text_input',
+      action_id: `meet_link_${day}`,
+      placeholder: { type: 'plain_text', text: 'https://meet.google.com/xxx-xxxx-xxx' },
+    };
+
+    if (currentLinks?.[day]) {
+      element.initial_value = currentLinks[day];
+    }
+
+    return {
+      type: 'input',
+      block_id: `meet_link_${day}_block`,
+      label: { type: 'plain_text', text: `${WEEKDAY_LABELS[day]} Meet 링크` },
+      element,
+      optional: true,
+    };
+  });
+
   return {
     type: 'modal',
     callback_id: 'edit_meet_link_submit',
     title: { type: 'plain_text', text: 'Meet 링크 변경' },
     submit: { type: 'plain_text', text: '저장' },
     close: { type: 'plain_text', text: '취소' },
-    blocks: [
-      {
-        type: 'input',
-        block_id: 'meet_link_block',
-        label: { type: 'plain_text', text: 'Google Meet 링크' },
-        element: {
-          type: 'url_text_input',
-          action_id: 'meet_link_input',
-          placeholder: { type: 'plain_text', text: 'https://meet.google.com/xxx-xxxx-xxx' },
-          ...(currentLink ? { initial_value: currentLink } : {}),
-        },
-      },
-    ],
+    blocks,
   };
 }
 

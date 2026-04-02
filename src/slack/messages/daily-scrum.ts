@@ -1,4 +1,4 @@
-import type { Settings, BoardConfig } from '../../types';
+import type { BoardConfig } from '../../types';
 
 export interface SqaLink {
   sqaKey: string;
@@ -8,7 +8,7 @@ export interface SqaLink {
 
 export function buildDailyScrumMessage(
   facilitatorSlackId: string,
-  settings: Settings,
+  meetLink: string | undefined,
   boards: BoardConfig[],
   sqaLinks?: SqaLink[],
 ): { blocks: unknown[]; text: string } {
@@ -16,14 +16,16 @@ export function buildDailyScrumMessage(
 
   const text = `<@${facilitatorSlackId}> 오늘의 데일리 스크럼 진행자입니다!`;
 
-  const actionElements: unknown[] = [
-    {
+  const actionElements: unknown[] = [];
+
+  if (meetLink) {
+    actionElements.push({
       type: 'button',
       text: { type: 'plain_text', text: '📹 Google Meet 참여하기', emoji: true },
-      url: settings.meetLink,
+      url: meetLink,
       action_id: 'open_meet',
-    },
-  ];
+    });
+  }
 
   for (const board of boards) {
     actionElements.push({
@@ -43,10 +45,16 @@ export function buildDailyScrumMessage(
       },
     },
     { type: 'divider' },
-    {
+  ];
+
+  if (actionElements.length > 0) {
+    blocks.push({
       type: 'actions',
       elements: actionElements,
-    },
+    });
+  }
+
+  blocks.push(
     { type: 'divider' },
     {
       type: 'section',
@@ -65,7 +73,7 @@ export function buildDailyScrumMessage(
         style: 'primary',
       },
     },
-  ];
+  );
 
   // ─── Append SQA results if present ───
   if (hasSqa) {

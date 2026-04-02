@@ -1,8 +1,12 @@
 // ─── KV Data Models ───
 
+export type Weekday = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday';
+
+export type MeetLinks = Record<Weekday, string>;
+
 export interface Settings {
   channelId: string;
-  meetLink: string;
+  meetLinks: MeetLinks;
 }
 
 export interface BoardConfig {
@@ -15,8 +19,6 @@ export interface TeamMember {
   slackUserId: string;
   jiraAccountId: string;
 }
-
-export type Weekday = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday';
 
 export interface Facilitators {
   monday: string;
