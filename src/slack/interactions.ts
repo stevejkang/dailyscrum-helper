@@ -61,6 +61,7 @@ export async function handleInteraction(
       if (actionId.startsWith('remove_member_')) {
         const targetUserId = actionId.replace('remove_member_', '');
         await removeMember(env.KV, targetUserId);
+        console.log('[settings:change]', JSON.stringify({ action: 'remove_member', by: userId, target: targetUserId }));
         await refreshHomeTab(env, userId);
       }
 
@@ -87,6 +88,7 @@ export async function handleInteraction(
       if (actionId.startsWith('remove_board_')) {
         const boardId = actionId.replace('remove_board_', '');
         await removeBoard(env.KV, boardId);
+        console.log('[settings:change]', JSON.stringify({ action: 'remove_board', by: userId, boardId }));
         await refreshHomeTab(env, userId);
       }
 
@@ -159,7 +161,7 @@ export async function handleInteraction(
 
       if (slackUserId && jiraAccountId) {
         await addMember(env.KV, { slackUserId, jiraAccountId });
-        // Refresh home tab for the user who submitted
+        console.log('[settings:change]', JSON.stringify({ action: 'add_member', by: userId, target: slackUserId, jiraAccountId }));
         await refreshHomeTab(env, userId);
       }
 
@@ -184,6 +186,7 @@ export async function handleInteraction(
       }
 
       await saveFacilitators(env.KV, facilitators);
+      console.log('[settings:change]', JSON.stringify({ action: 'edit_facilitators', by: userId, facilitators }));
       await refreshHomeTab(env, userId);
 
       return new Response(JSON.stringify({ response_action: 'clear' }), {
@@ -191,7 +194,6 @@ export async function handleInteraction(
       });
     }
 
-    // Edit channel
     if (callbackId === 'edit_channel_submit') {
       const channelId = values.channel_block?.channel_select?.selected_channel;
 
@@ -200,6 +202,7 @@ export async function handleInteraction(
         const settings = (await getSettings(env.KV)) ?? { channelId: '', meetLinks: defaultMeetLinks };
         settings.channelId = channelId;
         await saveSettings(env.KV, settings);
+        console.log('[settings:change]', JSON.stringify({ action: 'edit_channel', by: userId, channelId }));
         await refreshHomeTab(env, userId);
       }
 
@@ -215,11 +218,9 @@ export async function handleInteraction(
         const boardId = parseBoardIdFromUrl(boardUrl);
         if (boardId) {
           const boardName = await fetchBoardName(env, boardId);
-          await addBoard(env.KV, {
-            id: boardId,
-            name: boardName ?? `Board ${boardId}`,
-            url: boardUrl,
-          });
+          const name = boardName ?? `Board ${boardId}`;
+          await addBoard(env.KV, { id: boardId, name, url: boardUrl });
+          console.log('[settings:change]', JSON.stringify({ action: 'add_board', by: userId, boardId, name }));
           await refreshHomeTab(env, userId);
         }
       }
@@ -241,6 +242,7 @@ export async function handleInteraction(
       const settings = (await getSettings(env.KV)) ?? { channelId: '', meetLinks: defaultMeetLinks };
       settings.meetLinks = meetLinks;
       await saveSettings(env.KV, settings);
+      console.log('[settings:change]', JSON.stringify({ action: 'edit_meet_links', by: userId, meetLinks }));
       await refreshHomeTab(env, userId);
 
       return new Response(JSON.stringify({ response_action: 'clear' }), {
@@ -260,6 +262,7 @@ export async function handleInteraction(
         });
 
       await saveSqaSelections(env.KV, sqaEntries);
+      console.log('[settings:change]', JSON.stringify({ action: 'edit_sqa_selections', by: userId, sqaKeys: sqaEntries.map((e) => e.key) }));
 
       const metadata = JSON.parse(payload.view.private_metadata ?? '{}') as {
         messageTs?: string;
