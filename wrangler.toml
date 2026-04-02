@@ -14,6 +14,7 @@ JIRA_BASE_URL = "https://wantedlab.atlassian.net"
 JIRA_PROJECT_KEY_SQA = "SQA"
 JIRA_PROJECT_KEY_DEF = "DEF"
 JIRA_DEF_LIST_BASE_URL = "https://wantedlab.atlassian.net/jira/core/projects/DEF/list"
+SLACK_APP_ID = "A0AKMJJJX0B"
 
 [observability]
 enabled = true

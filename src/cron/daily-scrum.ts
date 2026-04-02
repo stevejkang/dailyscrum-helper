@@ -64,6 +64,7 @@ export async function handleDailyScrum(env: Env): Promise<void> {
     meetLink,
     boards,
     sqaLinks,
+    env.SLACK_APP_ID,
   );
 
   const result = await postMessage(env.SLACK_BOT_TOKEN, settings.channelId, blocks, text);

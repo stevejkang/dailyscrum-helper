@@ -45,6 +45,7 @@ export interface Env {
   JIRA_PROJECT_KEY_SQA: string;
   JIRA_PROJECT_KEY_DEF: string;
   JIRA_DEF_LIST_BASE_URL: string;
+  SLACK_APP_ID: string;
 }
 
 // ─── Slack API Types ───

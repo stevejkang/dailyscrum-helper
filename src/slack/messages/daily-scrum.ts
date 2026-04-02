@@ -11,6 +11,7 @@ export function buildDailyScrumMessage(
   meetLink: string | undefined,
   boards: BoardConfig[],
   sqaLinks?: SqaLink[],
+  slackAppId?: string,
 ): { blocks: unknown[]; text: string } {
   const hasSqa = sqaLinks && sqaLinks.length > 0;
 
@@ -108,6 +109,15 @@ export function buildDailyScrumMessage(
       });
     }
   }
+
+  const settingsText = slackAppId
+    ? `⚙️ 설정을 변경하려면 <slack://app?id=${slackAppId}&tab=home|App Home>으로 이동하세요.`
+    : '⚙️ 설정을 변경하려면 *Daily Scrum Helper* 앱의 Home 탭으로 이동하세요.';
+
+  blocks.push({
+    type: 'context',
+    elements: [{ type: 'mrkdwn', text: settingsText }],
+  });
 
   return { blocks, text };
 }
