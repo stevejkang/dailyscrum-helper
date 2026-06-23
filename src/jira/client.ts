@@ -51,22 +51,6 @@ export function parseBoardIdFromUrl(boardUrl: string): string | null {
   return match ? match[1] : null;
 }
 
-export function buildDefBoardUrl(
-  baseUrl: string,
-  jiraAccountIds: string[],
-  sqaKeys: string[],
-): string {
-  const assigneeList = jiraAccountIds.map((id) => `"${id}"`).join(', ');
-
-  const filters = sqaKeys.map((sqaKey) => {
-    const filter = `assignee IN (${assigneeList}) AND "품질점검" = ${sqaKey}`;
-    return `${baseUrl}?filter=${encodeURIComponent(filter)}&groupBy=status&sortBy=key&direction=DESC`;
-  });
-
-  // Return first URL for single SQA, or return array for multiple
-  return filters[0] ?? baseUrl;
-}
-
 export function buildDefBoardUrls(
   baseUrl: string,
   jiraAccountIds: string[],
@@ -74,7 +58,7 @@ export function buildDefBoardUrls(
 ): Array<{ sqaKey: string; url: string }> {
   return sqaKeys.map((sqaKey) => {
     const assigneeList = jiraAccountIds.map((id) => `"${id}"`).join(', ');
-    const filter = `assignee IN (${assigneeList}) AND "품질점검" = ${sqaKey}`;
+    const filter = `assignee IN (${assigneeList}) AND "품질점검" ~ ${sqaKey}`;
     const url = `${baseUrl}?filter=${encodeURIComponent(filter)}&groupBy=status&sortBy=key&direction=DESC`;
     return { sqaKey, url };
   });
